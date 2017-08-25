@@ -1,0 +1,46 @@
+student_details = LOAD '\tmp\pig_programs\student.txt' USING PigStorage(',') as (id:int, name:chararray, age:int,  city:chararray, mark:int);
+
+/* CONCAT */
+student_name_concat = foreach student_details Generate CONCAT (name ,' belongs to ', city);
+Dump student_name_concat;
+
+/* TOKENIZE */
+student_name_tokenize = foreach student_details  Generate TOKENIZE(name);
+Dump student_name_tokenize;
+
+/* SUM */
+student_group_all = Group student_details all;
+student_sum_marks = Foreach student_group_all Generate(student_details.name,student_details.mark),SUM(student_details.mark);
+Dump student_sum_marks;
+
+/* MIN */
+
+student_sum_min = FOREACH student_group_all GENERATE(student_details.name,student_details.mark),MIN(student_details.mark);
+Dump student_sum_min;
+
+/* MAX */
+
+student_sum_max = FOREACH student_group_all GENERATE(student_details.name,student_details.mark),MAX(student_details.mark);
+Dump student_sum_max;
+
+/*LIMIT */
+student_details_limit = LIMIT student_details 3;
+Dump student_details_limit;
+
+/* STORE */
+STORE student_name_concat INTO '\tmp\pig_programs\output\concat' USING PigStorage(',');
+STORE student_name_tokenize INTO '\tmp\pig_programs\output\tokenize' USING PigStorage(',');
+
+/* DISTINCT  & FLATTEN*/
+students_city_group = GROUP student_details by city;
+student_city_ditinct = FOREACH students_city_group{ 
+result =(1,0,$1);
+GENERATE FLATTEN(result);
+}
+DUMP student_city_ditinct;
+
+/* IsEmpty */
+students_is_empty = FILTER students_city_group by not IsEmpty(group);
+DUMP students_is_empty;
+
+
